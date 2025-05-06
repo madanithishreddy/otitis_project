@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Otitis Detector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .active-tab {
+      background-color: #3b82f6;
+      color: white;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+  <div class="container mx-auto p-4">
+    <header class="text-center my-8">
+      <h1 class="text-4xl font-bold text-gray-800">Otitis Detector</h1>
+      <p class="text-gray-600 mt-2">Upload images or manage patient details</p>
+    </header>
+
+    <div class="relative overflow-hidden bg-white rounded-lg shadow-xl mb-8">
+      <img src="https://placehold.co/1200x400/a0aec0/ffffff?text=Medical+Imaging+Placeholder" alt="Medical Imaging Placeholder" class="w-full h-64 object-cover"/>
+      <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <h2 class="text-white text-3xl font-semibold">Analyze Otitis Images with Ease</h2>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <nav class="flex justify-center space-x-4 mb-6">
+      <button class="tab-button px-4 py-2 rounded-md text-gray-700 bg-white shadow hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" data-tab="predict">Upload Image for Prediction</button>
+      <button class="tab-button px-4 py-2 rounded-md text-gray-700 bg-white shadow hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" data-tab="patient-details">Patient Details</button>
+    </nav>
+
+    <!-- Prediction Tab -->
+    <div id="predict" class="tab-content bg-white p-6 rounded-lg shadow-xl">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Upload Image for Prediction</h2>
+      <p class="text-gray-600 mb-6">Upload an image of an ear to get an Otitis prediction.</p>
+
+      <div class="flex flex-col items-center">
+        <input type="file" id="otitis-image-upload" accept="image/*" class="mb-4 p-2 border rounded-md">
+        <button id="predict-button" class="px-6 py-3 bg-green-500 text-white font-semibold rounded-md shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed" disabled>Select Image to Enable Prediction</button>
+      </div>
+
+      <div id="prediction-result" class="mt-6 p-4 bg-gray-100 rounded-md hidden">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Prediction Result:</h3>
+        <p id="result-text" class="text-gray-700"></p>
+      </div>
+    </div>
+
+    <!-- Patient Details Tab -->
+    <div id="patient-details" class="tab-content bg-white p-6 rounded-lg shadow-xl">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Patient Details</h2>
+      <p class="text-gray-600 mb-6">Enter patient information below.</p>
+
+      <form id="patient-details-form" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label for="patient-name" class="block text-gray-700 font-semibold mb-2">Name:</label>
+          <input type="text" id="patient-name" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="patient-age" class="block text-gray-700 font-semibold mb-2">Age:</label>
+          <input type="number" id="patient-age" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div>
+          <label for="patient-gender" class="block text-gray-700 font-semibold mb-2">Gender:</label>
+          <select id="patient-gender" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="">Select Gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div>
+          <label for="patient-contact" class="block text-gray-700 font-semibold mb-2">Contact:</label>
+          <input type="text" id="patient-contact" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        <div class="md:col-span-2">
+          <label for="patient-notes" class="block text-gray-700 font-semibold mb-2">Notes:</label>
+          <textarea id="patient-notes" rows="4" class="w-full p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div class="md:col-span-2 text-center">
+          <button type="submit" id="save-patient-button" class="px-6 py-3 bg-blue-500 text-white font-semibold rounded-md shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed">Save Patient Details</button>
+        </div>
+      </form>
+
+      <div id="patient-save-status" class="mt-6 p-4 bg-gray-100 rounded-md hidden">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Save Status:</h3>
+        <p id="status-text" class="text-gray-700"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const API_BASE = 'http://localhost:8000/api/v1';
+      const PREDICT_ENDPOINT = `${API_BASE}/predict`;
+      const SAVE_PATIENT_ENDPOINT = `${API_BASE}/patients`;
+
+      const tabs = document.querySelectorAll('.tab-button');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active-tab'));
+          contents.forEach(c => c.classList.remove('active'));
+          const targetTab = document.getElementById(tab.dataset.tab);
+          tab.classList.add('active-tab');
+          targetTab.classList.add('active');
+        });
+      });
+
+      tabs[0].classList.add('active-tab');
+      contents[0].classList.add('active');
+
+      const predictButton = document.getElementById('predict-button');
+      const imageUploadInput = document.getElementById('otitis-image-upload');
+      const predictionResultDiv = document.getElementById('prediction-result');
+      const resultText = document.getElementById('result-text');
+      let previewImage = null;
+
+      imageUploadInput.addEventListener('change', () => {
+        const file = imageUploadInput.files[0];
+        if (file) {
+          if (!file.type.startsWith('image/')) {
+            alert("Only image files are allowed.");
+            imageUploadInput.value = '';
+            return;
+          }
+
+          if (file.size > 2 * 1024 * 1024) {
+            alert("Image too large (max 2MB).");
+            imageUploadInput.value = '';
+            return;
+          }
+
+          predictButton.disabled = false;
+          predictButton.textContent = 'Predict Otitis';
+
+          if (previewImage) previewImage.remove();
+          previewImage = document.createElement('img');
+          previewImage.src = URL.createObjectURL(file);
+          previewImage.className = "mt-4 max-w-xs rounded-md shadow";
+          imageUploadInput.insertAdjacentElement("afterend", previewImage);
+        } else {
+          predictButton.disabled = true;
+          predictButton.textContent = 'Select Image to Enable Prediction';
+        }
+      });
+
+      predictButton.addEventListener('click', async () => {
+        const file = imageUploadInput.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        predictButton.disabled = true;
+        predictButton.textContent = 'Predicting...';
+        predictionResultDiv.classList.remove('hidden', 'bg-red-100', 'bg-green-100', 'bg-yellow-100');
+        predictionResultDiv.classList.add('bg-gray-100');
+        resultText.textContent = 'Predicting...';
+
+        try {
+          const res = await fetch(PREDICT_ENDPOINT, {
+            method: 'POST',
+            body: formData
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data?.detail || data?.message || 'Prediction failed.');
+          }
+
+          resultText.textContent = `Prediction: ${data.prediction}`;
+          predictionResultDiv.classList.replace('bg-gray-100', data.prediction.toLowerCase().includes('otitis') ? 'bg-red-100' : 'bg-green-100');
+        } catch (err) {
+          console.error('Prediction error:', err);
+
+          let message = 'An unexpected error occurred.';
+          if (err instanceof Error) {
+            message = err.message;
+          } else if (typeof err === 'object') {
+            try {
+              message = JSON.stringify(err);
+            } catch (e) {}
+          }
+
+          resultText.textContent = `Error: ${message}`;
+          predictionResultDiv.classList.replace('bg-gray-100', 'bg-red-100');
+        } finally {
+          predictButton.disabled = false;
+          predictButton.textContent = 'Predict Otitis';
+        }
+      });
+
+      const patientForm = document.getElementById('patient-details-form');
+      const savePatientButton = document.getElementById('save-patient-button');
+      const patientSaveStatusDiv = document.getElementById('patient-save-status');
+      const statusText = document.getElementById('status-text');
+
+      patientForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const patientData = {
+          name: document.getElementById('patient-name').value.trim(),
+          age: parseInt(document.getElementById('patient-age').value),
+          gender: document.getElementById('patient-gender').value,
+          contact: document.getElementById('patient-contact').value.trim(),
+          notes: document.getElementById('patient-notes').value.trim()
+        };
+
+        if (!patientData.name || isNaN(patientData.age) || patientData.age <= 0 || !patientData.gender) {
+          statusText.textContent = 'Please fill in valid Name, Age, and Gender.';
+          patientSaveStatusDiv.classList.remove('hidden', 'bg-green-100', 'bg-red-100');
+          patientSaveStatusDiv.classList.add('bg-yellow-100');
+          return;
+        }
+
+        savePatientButton.disabled = true;
+        savePatientButton.textContent = 'Saving...';
+        patientSaveStatusDiv.classList.remove('hidden', 'bg-green-100', 'bg-red-100', 'bg-yellow-100');
+        patientSaveStatusDiv.classList.add('bg-gray-100');
+        statusText.textContent = 'Saving patient details...';
+
+        try {
+          const res = await fetch(SAVE_PATIENT_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patientData)
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data?.detail || data?.message || 'Save failed.');
+
+          statusText.textContent = 'Patient details saved successfully!';
+          patientSaveStatusDiv.classList.replace('bg-gray-100', 'bg-green-100');
+          patientForm.reset();
+        } catch (err) {
+          console.error('Save error:', err);
+          let msg = err.message || 'An unexpected error occurred.';
+          statusText.textContent = `Error: ${msg}`;
+          patientSaveStatusDiv.classList.replace('bg-gray-100', 'bg-red-100');
+        } finally {
+          savePatientButton.disabled = false;
+          savePatientButton.textContent = 'Save Patient Details';
+        }
+      });
+    });
+  </script>
+</body>
+</html>
