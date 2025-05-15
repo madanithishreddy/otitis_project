@@ -1,7 +1,7 @@
 # ======================
 # 🔨 Stage 1: Build Stage
 # ======================
-FROM node:18-slim AS builder
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -19,7 +19,7 @@ RUN npm run build
 # ==========================
 # 🚀 Stage 2: Production Run
 # ==========================
-FROM node:18-slim AS runner
+FROM node:18-alpine AS runner
 
 # Define environment variables
 ENV NODE_ENV=production
@@ -42,4 +42,4 @@ RUN npm ci --omit=dev --no-audit --no-fund
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["npm", "run", "dev"]
