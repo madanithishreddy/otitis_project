@@ -2,14 +2,11 @@
 const nextConfig = {
   experimental: {
     appDir: true,
+    metadataBase: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000",
   },
   images: {
     dangerouslyAllowSVG: true,
     domains: [
-      "bhimrazy-turbo-train-jqq97vj97pq2566g-8000.preview.app.github.dev",
-      "otitis-media-detection.vercel.app",
-      "ear-care-iq.up.railway.app",
-      "ui-avatars.com",
       "localhost"
     ],
   },

@@ -12,6 +12,12 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
         },
       };
 
+      if (!process.env.API_URL) {
+        console.error("API_URL environment variable is not defined.");
+        res.status(500).json({ message: "Server configuration error: API_URL is missing." });
+        return;
+      }
+
       try {
         const { data: userData } = await axios.get(
           process.env.API_URL + "/api/v1/users/me",
@@ -29,7 +35,12 @@ export default async function login(req: NextApiRequest, res: NextApiResponse) {
 
         res.status(200).json({ user: userData.user });
       } catch (error: any) {
-        res.status(error.response.status).json(error.response.data);
+        if (error.response) {
+          res.status(error.response.status).json(error.response.data);
+        } else {
+          console.error("Unexpected error:", error);
+          res.status(500).json({ message: "An unexpected error occurred." });
+        }
       }
     }
   } else {

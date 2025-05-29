@@ -11,18 +11,24 @@ database = Database(DATABASE_URL)
 async def create_admin():
     """ This function creates admin user.
     """
-    print("Connecting to db",DATABASE_URL)
+    print("Connecting to db", DATABASE_URL)
     await database.connect()
     print("Creating admin")
 
     data = {'full_name': 'Admin', 'email': 'admin@admin.com', 'password': 'password'}
-    user = UserCreate(**data)
-    user.hash_password()
-    query = User.__table__.insert().values(**user.dict()).returning(User)
-    try:
-        data = await database.fetch_one(query)
-        print("Admin user created with email: ", data.email)
-    except Exception as e:
-        print("ERROR:", e)
+    query = User.__table__.select().where(User.email == data['email'])
+    existing_user = await database.fetch_one(query)
+
+    if existing_user:
+        print(f"Admin user with email {data['email']} already exists.")
+    else:
+        user = UserCreate(**data)
+        user.hash_password()
+        query = User.__table__.insert().values(**user.dict()).returning(User)
+        try:
+            new_user = await database.fetch_one(query)
+            print("Admin user created with email: ", new_user.email)
+        except Exception as e:
+            print("ERROR:", e)
 
     await database.disconnect()
