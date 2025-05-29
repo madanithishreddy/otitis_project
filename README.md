@@ -54,7 +54,7 @@ docker-compose up -d
 
 7. **Run Database Migrations**
 ```cmd
-alembic upgrade head
+docker exec -it voyage_api alembic upgrade head
 ```
 
 8. **Start Backend Server**
