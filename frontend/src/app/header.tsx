@@ -54,8 +54,8 @@ export default function Header({}: Props) {
       },
     ],
     button: {
-      title: user?.accessToken ? "Dashboard" : "Login",
-      link: user?.accessToken ? "/dashboard" : "/login",
+      title: "Login",
+      link: "/login",
     },
   };
   return (

@@ -7,7 +7,8 @@ const nextConfig = {
   images: {
     dangerouslyAllowSVG: true,
     domains: [
-      "localhost"
+      "localhost",
+      "ui-avatars.com" // Added ui-avatars.com to the allowed domains
     ],
   },
 };

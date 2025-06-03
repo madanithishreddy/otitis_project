@@ -17,19 +17,34 @@ async function getData() {
       Authorization: "Bearer " + access?.value,
     },
   };
-  const { data } = await axios.get(
-    process.env.API_URL + "/api/v1/analytics/",
-    userConfig
-  );
-  // The return value is *not* serialized
-  // You can return Date, Map, Set, etc.
-  // Recommendation: handle errors
-  if (!data) {
-    // This will activate the closest `error.js` Error Boundary
-    throw new Error("Failed to fetch data");
-  }
 
-  return data;
+  try {
+    const { data } = await axios.get(
+      process.env.API_URL + "/api/v1/analytics/",
+      userConfig
+    );
+
+    if (!data) {
+      throw new Error("No data received from the server");
+    }
+
+    return data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.error("Axios error fetching data:", {
+        status: error.response?.status,
+        headers: error.response?.headers,
+        data: error.response?.data,
+      });
+      throw new Error(
+        "Failed to fetch data: " +
+          (error.response?.data?.message || error.message)
+      );
+    } else {
+      console.error("Unexpected error fetching data:", error);
+      throw new Error("Failed to fetch data: " + String(error));
+    }
+  }
 }
 
 export default async function Dashboard() {
