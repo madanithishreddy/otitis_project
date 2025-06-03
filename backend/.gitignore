@@ -140,3 +140,6 @@ backup.dump.gz
 
 # Ignore ONNX model files
 ome.onnx
+
+# Ignore static image files
+static/*.jpg

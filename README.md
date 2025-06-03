@@ -16,54 +16,24 @@ ResearchGate Technical Report: https://www.researchgate.net/publication/37589365
 
 #### Backend Setup
 
-1. **Navigate to Backend Directory**
-```cmd
+# Go to the project directory
+```shell
 cd backend
-```
 
-2. **Create and Activate Virtual Environment**
-```cmd
+# create env
 python -m venv venv
-venv\Scripts\activate
-```
+source venv/bin/activate
 
-3. **Install Dependencies**
-```cmd
+# Install dependencies
 pip install -r requirements.txt
-```
 
-4. **Create Environment File**
-```cmd
-copy .env.example .env
-```
+# copy env file
+cp .env.example .env
 
-5. **Configure Environment Variables**
-Edit `backend\.env` file with your settings:
-```env
-PROJECT_NAME=voyage_imaging
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=your_secure_password_here
-POSTGRES_DB=voyage_imaging
-DATABASE_URL=postgresql+asyncpg://postgres:your_secure_password_here@localhost:5432/voyage_imaging
-```
-
-6. **Start Database with Docker**
-```cmd
-docker-compose up -d
-```
-
-7. **Run Database Migrations**
-```cmd
-docker exec -it voyage_api alembic upgrade head
-```
-
-8. **Start Backend Server**
-```cmd
+# Start the server
 python manage.py serve
+
 ```
-
-**Backend will be running at: http://localhost:8000**
-
 #### Frontend Setup
 
 1. **Navigate to Frontend Directory (Open new terminal)**
@@ -78,13 +48,14 @@ npm install
 
 3. **Create Environment File**
 ```cmd
-copy .env.example .env.local
+copy .env.example .env
 ```
 
 4. **Configure Frontend Environment**
-Edit `frontend\.env.local`:
+Edit `frontend\.env`:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
+API_URL=http://localhost:8000
 ```
 
 5. **Start Frontend Server**
@@ -98,19 +69,49 @@ npm run dev
 
 #### Complete Containerized Setup
 
-1. **Backend with Docker**
+**Backend with Docker**
+
+1. Navigate to Backend Directory
 ```cmd
 cd backend
+```
+2. Create Environment File
+```cmd
 copy .env.example .env
-REM Edit .env with your database credentials
+```
+
+3. Configure Environment Variables
+Edit `backend\.env` file with your settings:
+```env
+PROJECT_NAME=voyage_imaging
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=your_secure_password_here
+POSTGRES_DB=voyage_imaging
+DATABASE_URL=postgresql+asyncpg://postgres:your_secure_password_here@localhost:5432/voyage_imaging
+```
+
+4. **Start Database with Docker**
+```cmd
 docker-compose up -d
 ```
 
-2. **Frontend with Docker**
+5. **Run Database Migrations**
+```cmd
+docker exec -it voyage_api alembic upgrade head
+```
+6. **Creation of admin**
+```cmd
+docker exec -it voyage_api python manage.py createadmin
+```
+
+**Backend will be running at: http://localhost:8000**
+> **Note:** Before running the backend place the model at `backend\src\ml_model\ome.onnx`
+
+**Frontend with Docker**
 ```cmd
 cd frontend
 copy .env.example .env
-REM Edit .env if needed
+Edit .env if needed
 docker-compose up -d
 ```
 
@@ -131,24 +132,12 @@ docker-compose up -d
 - **Username**: postgres
 - **Password**: your_secure_password_here
 
-### 🛠️ Troubleshooting
-
-1. **Port Conflicts**: Modify port mappings in `docker-compose.yml` files if needed
-2. **Database Issues**: Check container status:
-   ```cmd
-   docker ps
-   ```
-3. **Migration Issues**: Ensure database is running before migrations:
-   ```cmd
-   docker-compose up -d db
-   alembic upgrade head
-   ```
 
 ### ✅ Verification Steps
 
 1. Visit http://localhost:3000 - Frontend should load
 2. Visit http://localhost:8000/docs - API documentation should be accessible
-3. Check logs: `docker logs voyage_api`
+3. Check logs: `docker logs voyage_api` or `docker logs -f voyage_api`
 4. Test image upload and prediction functionality
 
 
